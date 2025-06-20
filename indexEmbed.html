@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pomodoro Clock</title>
+  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 500px;
+      width: 100%;
+      padding: 20px;
+    }
+    
+    #clock {
+      background: rgba(25, 25, 35, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .title {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      color: white;
+      margin-bottom: 10px;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+    
+    .subtitle {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 1.1rem;
+    }
+    
+    .settings {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    
+    .length-control {
+      background: rgba(40, 40, 60, 0.7);
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      flex: 1;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    #break-label, #session-label {
+      color: white;
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      display: block;
+    }
+    
+    .control-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .btn-control {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-control:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
+    }
+    
+    .btn-control:active {
+      transform: scale(0.95);
+    }
+    
+    #break-length, #session-length {
+      color: white;
+      font-size: 2rem;
+      font-weight: bold;
+      min-width: 40px;
+      text-align: center;
+    }
+    
+    .timer-container {
+      background: rgba(40, 40, 60, 0.7);
+      border-radius: 15px;
+      padding: 30px;
+      text-align: center;
+      margin-bottom: 30px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    #timer-label {
+      color: white;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    
+    #time-left {
+      color: white;
+      font-size: 4rem;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+    
+    .timer-controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    
+    .btn-timer {
+      background: linear-gradient(to right, #ff9500, #ff5e62);
+      border: none;
+      color: white;
+      padding: 12px 25px;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-timer:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .btn-timer:active {
+      transform: translateY(1px);
+    }
+    
+    .progress-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+    
+    .progress-ring-circle {
+      transition: stroke-dashoffset 1s linear;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.9rem;
+    }
+    
+    @media (max-width: 500px) {
+      .settings {
+        flex-direction: column;
+      }
+      
+      #time-left {
+        font-size: 3rem;
+      }
+      
+      .btn-timer {
+        padding: 10px 20px;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    
+    const PomodoroClock = () => {
+      // Default settings
+      const DEFAULT_BREAK = 5;
+      const DEFAULT_SESSION = 25;
+      
+      // State
+      const [breakLength, setBreakLength] = useState(DEFAULT_BREAK);
+      const [sessionLength, setSessionLength] = useState(DEFAULT_SESSION);
+      const [timerLabel, setTimerLabel] = useState('Session');
+      const [timeLeft, setTimeLeft] = useState(DEFAULT_SESSION * 60);
+      const [isRunning, setIsRunning] = useState(false);
+      const [isSession, setIsSession] = useState(true);
+      
+      // Refs
+      const audioRef = useRef(null);
+      const timerRef = useRef(null);
+      
+      // Format time as mm:ss
+      const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      };
+      
+      // Handle break decrement
+      const decrementBreak = () => {
+        if (breakLength > 1) {
+          setBreakLength(breakLength - 1);
+          // If we're in break time, update the time left
+          if (timerLabel === 'Break' && !isRunning) {
+            setTimeLeft((breakLength - 1) * 60);
+          }
+        }
+      };
+      
+      // Handle break increment
+      const incrementBreak = () => {
+        if (breakLength < 60) {
+          setBreakLength(breakLength + 1);
+          // If we're in break time, update the time left
+          if (timerLabel === 'Break' && !isRunning) {
+            setTimeLeft((breakLength + 1) * 60);
+          }
+        }
+      };
+      
+      // Handle session decrement
+      const decrementSession = () => {
+        if (sessionLength > 1) {
+          setSessionLength(sessionLength - 1);
+          // If we're in session time, update the time left
+          if (timerLabel === 'Session' && !isRunning) {
+            setTimeLeft((sessionLength - 1) * 60);
+          }
+        }
+      };
+      
+      // Handle session increment
+      const incrementSession = () => {
+        if (sessionLength < 60) {
+          setSessionLength(sessionLength + 1);
+          // If we're in session time, update the time left
+          if (timerLabel === 'Session' && !isRunning) {
+            setTimeLeft((sessionLength + 1) * 60);
+          }
+        }
+      };
+      
+      // Toggle timer
+      const toggleTimer = () => {
+        setIsRunning(!isRunning);
+      };
+      
+      // Reset timer
+      const resetTimer = () => {
+        // Stop timer
+        clearInterval(timerRef.current);
+        setIsRunning(false);
+        
+        // Reset values
+        setBreakLength(DEFAULT_BREAK);
+        setSessionLength(DEFAULT_SESSION);
+        setTimerLabel('Session');
+        setTimeLeft(DEFAULT_SESSION * 60);
+        setIsSession(true);
+        
+        // Reset audio
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+      };
+      
+      // Timer effect
+      useEffect(() => {
+        if (isRunning) {
+          timerRef.current = setInterval(() => {
+            setTimeLeft(prev => {
+              if (prev <= 0) {
+                // Play sound when timer reaches 0
+                if (audioRef.current) {
+                  audioRef.current.play();
+                }
+                
+                // Switch between session and break
+                if (isSession) {
+                  setTimerLabel('Break');
+                  setIsSession(false);
+                  return breakLength * 60;
+                } else {
+                  setTimerLabel('Session');
+                  setIsSession(true);
+                  return sessionLength * 60;
+                }
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        } else {
+          clearInterval(timerRef.current);
+        }
+        
+        return () => clearInterval(timerRef.current);
+      }, [isRunning, isSession, breakLength, sessionLength]);
+      
+      // Clean up on unmount
+      useEffect(() => {
+        return () => clearInterval(timerRef.current);
+      }, []);
+      
+      return (
+        <div className="container">
+          <div id="clock">
+            <div className="title">
+              <h1>Pomodoro Clock</h1>
+              <p className="subtitle">25 + 5 Productivity Timer</p>
+            </div>
+            
+            <div className="settings">
+              <div className="length-control">
+                <label id="break-label">Break Length</label>
+                <div className="control-container">
+                  <button id="break-decrement" className="btn-control" onClick={decrementBreak}>
+                    <i className="fas fa-arrow-down"></i>
+                  </button>
+                  <div id="break-length">{breakLength}</div>
+                  <button id="break-increment" className="btn-control" onClick={incrementBreak}>
+                    <i className="fas fa-arrow-up"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="length-control">
+                <label id="session-label">Session Length</label>
+                <div className="control-container">
+                  <button id="session-decrement" className="btn-control" onClick={decrementSession}>
+                    <i className="fas fa-arrow-down"></i>
+                  </button>
+                  <div id="session-length">{sessionLength}</div>
+                  <button id="session-increment" className="btn-control" onClick={incrementSession}>
+                    <i className="fas fa-arrow-up"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="timer-container">
+              <div id="timer-label">{timerLabel}</div>
+              <div id="time-left">{formatTime(timeLeft)}</div>
+              
+              <div className="timer-controls">
+                <button id="start_stop" className="btn-timer" onClick={toggleTimer}>
+                  <i className={`fas fa-${isRunning ? 'pause' : 'play'}`}></i>
+                  {isRunning ? 'Pause' : 'Start'}
+                </button>
+                <button id="reset" className="btn-timer" onClick={resetTimer}>
+                  <i className="fas fa-sync-alt"></i>
+                  Reset
+                </button>
+              </div>
+            </div>
+            
+            <audio 
+              id="beep" 
+              ref={audioRef}
+              preload="auto"
+              src="https://raw.githubusercontent.com/freeCodeCamp/cdn/master/build/testable-projects-fcc/audio/BeepSound.wav"
+            />
+            
+            <div className="footer">
+              <p>Pomodoro Clock | Created for freeCodeCamp Project</p>
+            </div>
+          </div>
+        </div>
+      );
+    };
+    
+    ReactDOM.render(<PomodoroClock />, document.getElementById('app'));
+  </script>
+  
+  <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
+</body>
+</html>
